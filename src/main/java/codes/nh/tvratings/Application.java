@@ -48,6 +48,8 @@ public class Application {
 
     private static UserDatabase userDatabase;
 
+    private static final boolean doUpdate = true;
+
     public static void main(String[] args) {
         System.out.println("application started");
         Utils.log("application started");
@@ -136,7 +138,11 @@ public class Application {
             imdbDatabase = new ImdbDatabase(oldImdbDatabaseFile.getPath());
             imdbDatabase.connect();
 
-            updateDatabaseInBackground(newImdbDatabaseFile, oldImdbDatabaseFile.getPath());
+            if (doUpdate) {
+                updateDatabaseInBackground(newImdbDatabaseFile, oldImdbDatabaseFile.getPath());
+            } else {
+                Utils.log("doUpdate=false");
+            }
 
         } else {
             Utils.log("database is uptodate -> start server");
