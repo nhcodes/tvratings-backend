@@ -5,7 +5,7 @@ import codes.nh.tvratings.database.ImdbDatabase;
 import codes.nh.tvratings.database.ImdbDatasetsImporter;
 import codes.nh.tvratings.database.UserDatabase;
 import codes.nh.tvratings.mail.MailManager;
-import codes.nh.tvratings.server.ImdbServer;
+import codes.nh.tvratings.server.APIServer;
 import codes.nh.tvratings.utils.Utils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -39,7 +39,7 @@ public class Application {
 
     private static final File userDatabaseFile = new File(databaseDirectory, "users" + databaseFileNameSuffix);
 
-    private static ImdbServer server;
+    private static APIServer server;
 
     private static String lastUpdate;
 
@@ -141,7 +141,7 @@ public class Application {
         userDatabase = new UserDatabase(userDatabaseFile.getPath());
         userDatabase.connect();
 
-        server = new ImdbServer(configuration.serverPort, imdbDatabase, userDatabase);
+        server = new APIServer(configuration.serverPort, imdbDatabase, userDatabase);
         server.start();
 
         //after 5 minutes, check every minute if there's a new day, and if there is, update

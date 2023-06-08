@@ -19,9 +19,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
- * this class contains the imdb api server and the underlying endpoints
+ * This class contains the API server and endpoints.
  */
-public class ImdbServer {
+public class APIServer {
 
     private final int port;
 
@@ -31,7 +31,7 @@ public class ImdbServer {
 
     private Javalin server;
 
-    public ImdbServer(int port, ImdbDatabase imdbDatabase, UserDatabase userDatabase) {
+    public APIServer(int port, ImdbDatabase imdbDatabase, UserDatabase userDatabase) {
         this.port = port;
         this.imdbDatabase = imdbDatabase;
         this.userDatabase = userDatabase;
@@ -46,7 +46,7 @@ public class ImdbServer {
     }
 
     /**
-     * starts the server. stops any running server
+     * Starts the API server. Stops any running server.
      */
     public void start() {
 
@@ -74,6 +74,9 @@ public class ImdbServer {
                 .start();
     }
 
+    /**
+     * Stops the API server.
+     */
     public void stop() {
         server.close();
     }
@@ -131,10 +134,9 @@ public class ImdbServer {
     //==========[Endpoints]==========
 
     /**
-     * /search
-     * example: http://localhost:7070/search?type=shows&sortColumn=VoTeS&minRating=9&sortOrder=desc&genres=DRAMA,crime&pageLimit=10&pageNumber=0
+     * example: /search?type=shows&sortColumn=VoTeS&minRating=9&sortOrder=desc&genres=DRAMA,crime&pageLimit=10&pageNumber=0
      *
-     * @return the search endpoint handler
+     * @return The /search endpoint handler.
      */
     private Handler getSearchHandler() {
         return context -> {
@@ -165,10 +167,9 @@ public class ImdbServer {
     }
 
     /**
-     * /show
-     * example: http://localhost:7070/show?showId=tt0903747
+     * example: /show?showId=tt0903747
      *
-     * @return the show endpoint handler
+     * @return The /show endpoint handler.
      */
     private Handler getShowHandler() {
         return context -> {
@@ -201,10 +202,9 @@ public class ImdbServer {
     }
 
     /**
-     * /genres
-     * example: http://localhost:7070/genres
+     * example: /genres
      *
-     * @return the genres endpoint handler
+     * @return The /genres endpoint handler.
      */
     private Handler getGenresHandler() {
         return context -> {
@@ -216,11 +216,11 @@ public class ImdbServer {
     }
 
     /**
-     * /login
-     * example: http://localhost:7070/login
-     * body: json of (email, recaptcha) to request verification code or (email, recaptcha, verification code) to log in
+     * example: /login<br>
+     * body: json of (email, recaptcha) to request a verification code
+     * or (email, recaptcha, verification code) to log in.
      *
-     * @return the login endpoint handler
+     * @return The /login endpoint handler.
      */
     private Handler postLoginHandler() {
         return context -> {
@@ -279,10 +279,9 @@ public class ImdbServer {
     }
 
     /**
-     * /followlist
-     * example: http://localhost:7070/followlist
+     * example: /followlist
      *
-     * @return the followlist endpoint handler
+     * @return The /followlist endpoint handler.
      */
     private Handler getFollowsHandler() {
         return context -> {
@@ -302,10 +301,9 @@ public class ImdbServer {
     }
 
     /**
-     * /follow
-     * example: http://localhost:7070/follow?showId=tt0903747&follow=true
+     * example: /follow?showId=tt0903747&follow=true
      *
-     * @return the follow endpoint handler
+     * @return The /follow endpoint handler.
      */
     private Handler getFollowHandler() {
         return context -> {
