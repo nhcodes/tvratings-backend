@@ -58,9 +58,8 @@ public class APIServer {
         }
 
         server = Javalin.create(getJavalinConfig())
-                .get("", context -> {
-                    context.result("hello world");
-                })
+
+                .get("", context -> context.result("hello world"))
                 .get("/search", getSearchHandler())
                 .get("/show", getShowHandler())
                 .get("/genres", getGenresHandler())
@@ -69,7 +68,7 @@ public class APIServer {
                 .get("/follow", getFollowHandler())
 
                 .exception(Exception.class, (exception, context) -> { //todo
-                    Utils.log(exception.getMessage());
+                    Utils.log("server error: " + exception.getMessage());
                     respondFailure(context, HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
                 })
 
@@ -176,7 +175,7 @@ public class APIServer {
     private Handler getShowHandler() {
         return context -> {
 
-            Utils.log(context.ip() + " getShowHandler ");
+            Utils.log(context.ip() + " getShowHandler");
 
             String showId = context.queryParam("showId");
             if (showId == null) {
@@ -294,7 +293,7 @@ public class APIServer {
                 return;
             }
 
-            Utils.log(email + " getFollows");
+            Utils.log(email + " getFollowListHandler");
 
             JSONArray followsJson = userDatabase.getFollowedShows(email, imdbDatabase.getDatabasePath());
             respondSuccess(context, followsJson.toString());
@@ -343,7 +342,7 @@ public class APIServer {
 
     private void sendVerificationMail(String email, String verificationCode) throws Exception {
         String subject = "your verification code";
-        String content = "<html><h5>your verification code: </h5><h3>" + verificationCode + "</h3></html>";
+        String content = "<html><h3>your verification code: %s</h3></html>".formatted(verificationCode);
         Application.mailManager.sendMail(email, subject, content);
     }
 
