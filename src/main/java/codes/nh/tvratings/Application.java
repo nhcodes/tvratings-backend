@@ -48,7 +48,6 @@ public class Application {
     private static final boolean doUpdate = true;
 
     public static void main(String[] args) {
-        System.out.println("application started");
         Utils.log("application started");
 
         try {

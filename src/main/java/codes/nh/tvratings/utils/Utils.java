@@ -38,7 +38,7 @@ public class Utils {
     private static final String logTag = "[tvratings] ";
 
     public static void log(String message) {
-        //System.out.println(logTag + message);
+        System.out.println(logTag + message);
         logger.info(logTag + message);
     }
 
