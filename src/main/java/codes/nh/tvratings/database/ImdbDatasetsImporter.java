@@ -21,7 +21,7 @@ import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 
 /**
- * downloads and imports the necessary imdb datasets into a sql database
+ * This class is responsible for downloading and importing the necessary IMDb datasets into a SQL database.
  */
 public class ImdbDatasetsImporter {
 
@@ -34,7 +34,7 @@ public class ImdbDatasetsImporter {
     private final String baseUrl = "https://datasets.imdbws.com/";
 
     /**
-     * see https://www.imdb.com/interfaces/ and https://datasets.imdbws.com/
+     * See https://developer.imdb.com/non-commercial-datasets/ and https://datasets.imdbws.com/.
      */
     private final String[] datasets = {
             "title.basics.tsv.gz",
@@ -43,7 +43,7 @@ public class ImdbDatasetsImporter {
     };
 
     /**
-     * starts the importer
+     * Starts the import process.
      */
     public void start() throws IOException, SQLException {
         long startTime = System.currentTimeMillis();
@@ -61,10 +61,10 @@ public class ImdbDatasetsImporter {
     }
 
     /**
-     * downloads a dataset from imdb and unzips it
+     * Downloads a dataset from IMDb and unzips it.
      *
-     * @param datasetName the name of the dataset, has to be one of {@link #datasets}
-     * @return the downloaded, unzipped file
+     * @param datasetName The name of the dataset. Has to be one of {@link #datasets}.
+     * @return The downloaded, unzipped dataset file.
      */
     private File downloadDataset(String datasetName) throws IOException {
         long startTime = System.currentTimeMillis();
@@ -85,9 +85,9 @@ public class ImdbDatasetsImporter {
     }
 
     /**
-     * import a .tsv dataset file into the database
+     * Import a .tsv dataset file into the SQL database.
      *
-     * @param datasetFile the file to import, has to be a .tsv file
+     * @param datasetFile The dataset file to import. Has to be a .tsv file.
      */
     private void importDataset(File datasetFile) throws SQLException, IOException {
         long startTime = System.currentTimeMillis();
@@ -122,14 +122,14 @@ public class ImdbDatasetsImporter {
             String insertValuesSql = String.format("INSERT INTO %s VALUES (%s)", sqlTableName, placeholders);
             try (PreparedStatement insertValuesStatement = databaseConnection.prepareStatement(insertValuesSql);) {
                 while (iterator.hasNext()) {
-                    String line = iterator.next();
-                    String[] values = line.split("\t");
+                    String row = iterator.next();
+                    String[] rowValues = row.split("\t");
 
                     int i = 0;
-                    for (String value : values) {
+                    for (String value : rowValues) {
                         i++;
 
-                        // let's replace \N (which denotes a missing value) by null
+                        //replace \N (which denotes a missing value) by null
                         if (value.equals("\\N")) {
                             value = null;
                         }
@@ -150,10 +150,11 @@ public class ImdbDatasetsImporter {
     }
 
     /**
-     * combines the downloaded tables into a show table and an episodes table,
-     * creates a showId index on the episodes table,
-     * deletes unnecessary shows/episodes
-     * and finally deletes the temporary tables
+     * 1. Combines the downloaded tables into a "show" and an "episodes" table.
+     * 2. Creates important indices to improve database performance.
+     * 3. Deletes unnecessary shows/episodes (shows with no episodes or episodes not belonging to any show).
+     * 4. Deletes the temporary tables.
+     * 5. Creates a "genres" table to respect the 1NF.
      */
     private void optimizeTables() throws SQLException {
         long startTime = System.currentTimeMillis();

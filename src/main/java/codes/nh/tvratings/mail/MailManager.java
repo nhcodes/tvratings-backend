@@ -7,7 +7,7 @@ import jakarta.mail.internet.MimeMessage;
 import java.util.Properties;
 
 /**
- * the mail manager enables sending emails for verification codes & follow notifications
+ * This class provides functionality for sending emails using the Jakarta Mail API.
  */
 public class MailManager {
 

@@ -8,8 +8,9 @@ import java.sql.*;
 import java.util.List;
 
 /**
- * this class allows to manage sqlite database connections.
- * {@link #connect()} has to be called first
+ * This class provides methods manage SQLite database connections,
+ * execute SQL updates and queries, and convert query results to JSON format.
+ * {@link #connect()} has to be called first.
  */
 public abstract class SqliteDatabase {
 
@@ -30,17 +31,17 @@ public abstract class SqliteDatabase {
     }
 
     /**
-     * @return the previously established connection,
-     * or null if {@link #connect()} wasn't or {@link #disconnect()} was called beforehand
+     * @return The previously established connection,
+     * or null if {@link #connect()} wasn't or {@link #disconnect()} was called beforehand.
      */
     public Connection getConnection() {
         return connection;
     }
 
     /**
-     * establishes a new connection
+     * Establishes a new connection.
      *
-     * @throws Exception if already connected
+     * @throws Exception If already connected or a database error occurs.
      */
     public void connect() throws Exception {
         Utils.log("connecting to database");
@@ -56,9 +57,9 @@ public abstract class SqliteDatabase {
     }
 
     /**
-     * closes a previously established connection
+     * Closes a previously established connection.
      *
-     * @throws Exception if not connected
+     * @throws Exception If not connected or a database error occurs.
      */
     public void disconnect() throws Exception {
         Utils.log("disconnecting from database");
@@ -73,12 +74,25 @@ public abstract class SqliteDatabase {
         Utils.log("disconnected from database");
     }
 
+    /**
+     * Executes a database statement.
+     *
+     * @param query The update statement.
+     * @return The row count or 0.
+     * @throws SQLException
+     */
     protected int execute(String query) throws SQLException {
         return execute(query, List.of());
     }
 
-    //TODO
-
+    /**
+     * Executes a database update statement.
+     *
+     * @param query  The update statement.
+     * @param values The placeholder values.
+     * @return The row count or 0.
+     * @throws SQLException If a database error occurs.
+     */
     protected int execute(String query, List<String> values) throws SQLException {
         try (PreparedStatement statement = getConnection().prepareStatement(query);) {
             int i = 0;
@@ -90,10 +104,25 @@ public abstract class SqliteDatabase {
         }
     }
 
+    /**
+     * Executes a database query statement and returns the result in JSON format.
+     *
+     * @param query The query statement.
+     * @return The result in JSON format.
+     * @throws SQLException If a database error occurs.
+     */
     protected JSONArray queryAndConvertToJson(String query) throws SQLException {
         return queryAndConvertToJson(query, List.of());
     }
 
+    /**
+     * Executes a database query statement and returns the result in JSON format.
+     *
+     * @param query  The query statement.
+     * @param values The placeholder values.
+     * @return The result in JSON format.
+     * @throws SQLException If a database error occurs.
+     */
     protected JSONArray queryAndConvertToJson(String query, List<String> values) throws SQLException {
         try (PreparedStatement statement = getConnection().prepareStatement(query);) {
             int i = 0;
@@ -105,7 +134,6 @@ public abstract class SqliteDatabase {
             return resultSetToJson(resultSet);
         }
     }
-    //TODO
 
     private JSONArray resultSetToJson(ResultSet resultSet) throws SQLException {
         JSONArray array = new JSONArray();
