@@ -4,7 +4,9 @@ import codes.nh.tvratings.Application;
 import codes.nh.tvratings.database.ImdbDatabase;
 import codes.nh.tvratings.database.UserDatabase;
 import codes.nh.tvratings.utils.JWTManager;
+import codes.nh.tvratings.utils.RecaptchaManager;
 import codes.nh.tvratings.utils.Utils;
+import codes.nh.tvratings.utils.VerificationCodeManager;
 import io.javalin.Javalin;
 import io.javalin.community.ssl.SSLConfig;
 import io.javalin.community.ssl.SSLPlugin;
@@ -63,7 +65,7 @@ public class APIServer {
                 .get("/show", getShowHandler())
                 .get("/genres", getGenresHandler())
                 .post("/login", postLoginHandler())
-                .get("/followlist", getFollowsHandler())
+                .get("/followlist", getFollowListHandler())
                 .get("/follow", getFollowHandler())
 
                 .exception(Exception.class, (exception, context) -> { //todo
@@ -241,7 +243,7 @@ public class APIServer {
             }
 
             String recaptcha = loginJson.optString("recaptcha", null);
-            if (recaptcha == null || !Utils.verifyRecaptchaToken(recaptcha)) {
+            if (!recaptchaManager.verifyToken(recaptcha)) {
                 respondFailure(context, HttpStatus.BAD_REQUEST, "recaptcha not found or invalid");
                 return;
             }
@@ -250,7 +252,7 @@ public class APIServer {
             if (code == null) {
                 //generate verification code, put it in db, and send it to email
 
-                String verificationCode = Utils.generateVerificationCode();
+                String verificationCode = verificationCodeManager.generateVerificationCode();
                 userDatabase.addVerificationCode(email, verificationCode);
                 Utils.log(email + " send verification code " + verificationCode);
                 try {
@@ -283,7 +285,7 @@ public class APIServer {
      *
      * @return The /followlist endpoint handler.
      */
-    private Handler getFollowsHandler() {
+    private Handler getFollowListHandler() {
         return context -> {
 
             String email = getJWTEmailFromCookie(context);
@@ -335,13 +337,21 @@ public class APIServer {
         };
     }
 
+    //==========[Verification Code]==========
+
+    private final VerificationCodeManager verificationCodeManager = new VerificationCodeManager();
+
     private void sendVerificationMail(String email, String verificationCode) throws Exception {
         String subject = "your verification code";
         String content = "<html><h5>your verification code: </h5><h3>" + verificationCode + "</h3></html>";
         Application.mailManager.sendMail(email, subject, content);
     }
 
-    //==========[Authentication]==========
+    //==========[Google Recaptcha]==========
+
+    private final RecaptchaManager recaptchaManager = new RecaptchaManager();
+
+    //==========[JWT Authentication]==========
 
     /*
     https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie

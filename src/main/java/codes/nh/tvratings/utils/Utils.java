@@ -1,27 +1,11 @@
 package codes.nh.tvratings.utils;
 
-import codes.nh.tvratings.Application;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.time.Duration;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.Base64;
 import java.util.Scanner;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
@@ -66,52 +50,6 @@ public class Utils {
      */
     public static ScheduledFuture<?> repeatAsync(Runnable function, long initialDelaySeconds, long intervalSeconds) {
         return scheduledThreadPool.scheduleAtFixedRate(function, initialDelaySeconds, intervalSeconds, TimeUnit.SECONDS);
-    }
-
-    //==========[VERIFICATION CODE]==========
-
-    private static final int codeLength = 6;
-
-    private static final char[] codeCharacters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
-
-    private static final SecureRandom random = new SecureRandom();
-
-    /**
-     * generates a random verification code (36^6 possible values)
-     *
-     * @return the generated code
-     */
-    public static String generateVerificationCode() {
-        StringBuilder stringBuilder = new StringBuilder(codeLength);
-        for (int i = 0; i < codeLength; i++) {
-            int randomIndex = random.nextInt(codeCharacters.length);
-            char randomCharacter = codeCharacters[randomIndex];
-            stringBuilder.append(randomCharacter);
-        }
-        return stringBuilder.toString();
-    }
-
-    //==========[Google Recaptcha]==========
-
-    public static boolean verifyRecaptchaToken(String token) throws Exception {
-        String secret = Application.configuration.recaptchaSecret;
-
-        String parameters = "secret=%s&response=%s".formatted(secret, token);
-        URI url = new URI("https://www.google.com/recaptcha/api/siteverify?" + parameters);
-
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(url)
-                .POST(HttpRequest.BodyPublishers.noBody())
-                .timeout(Duration.of(10, ChronoUnit.SECONDS))
-                .build();
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-        int statusCode = response.statusCode();
-        JSONObject jsonResponse = new JSONObject(response.body());
-        boolean success = jsonResponse.getBoolean("success");
-        Utils.log(statusCode + " - " + jsonResponse);
-        return success;
     }
 
     //==========[OTHER]==========
