@@ -6,13 +6,17 @@ import codes.nh.tvratings.database.UserDatabase;
 import codes.nh.tvratings.utils.JWTManager;
 import codes.nh.tvratings.utils.Utils;
 import io.javalin.Javalin;
+import io.javalin.community.ssl.SSLConfig;
 import io.javalin.community.ssl.SSLPlugin;
+import io.javalin.config.JavalinConfig;
 import io.javalin.http.*;
 import io.javalin.http.util.NaiveRateLimit;
+import io.javalin.plugin.bundled.CorsContainer;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * this class contains the imdb api server and the underlying endpoints
@@ -51,32 +55,7 @@ public class ImdbServer {
             return;
         }
 
-        server = Javalin.create(config -> {
-                    config.plugins.register(new SSLPlugin(sslConfig -> {
-                        if (Application.configuration.sslEnabled) {
-                            sslConfig.insecure = false;
-                            sslConfig.secure = true;
-                            sslConfig.sniHostCheck = false; //BadMessageException: 400: Invalid SNI
-                            sslConfig.pemFromPath(Application.configuration.sslCertificatePath, Application.configuration.sslPrivateKeyPath);
-                        } else {
-                            sslConfig.insecure = true;
-                            sslConfig.secure = false;
-                        }
-                        sslConfig.insecurePort = port;
-                        sslConfig.securePort = port;
-                    }));
-                    if (Application.configuration.sslEnabled) {
-                        config.plugins.enableSslRedirects();
-                    }
-                    config.plugins.enableCors(corsContainer -> {
-                        corsContainer.add(corsConfig -> {
-                            corsConfig.allowHost(Application.configuration.corsHost);
-                            corsConfig.allowCredentials = true;
-                            //it.exposeHeader("Set-Cookie");
-                        });
-                    });
-                })
-
+        server = Javalin.create(getJavalinConfig())
                 .get("", context -> {
                     context.result("hello world");
                 })
@@ -108,6 +87,48 @@ public class ImdbServer {
         errorJson.put("error", errorMessage);
         context.status(status).contentType(ContentType.APPLICATION_JSON).result(errorJson.toString());
     }
+
+    //==========[Configuration]==========
+
+    private Consumer<JavalinConfig> getJavalinConfig() {
+        return config -> {
+
+            if (Application.configuration.sslEnabled) {
+                config.plugins.enableSslRedirects();
+            }
+
+            config.plugins.register(new SSLPlugin(getSSLConfig()));
+
+            config.plugins.enableCors(getCorsConfig());
+
+        };
+    }
+
+    private Consumer<SSLConfig> getSSLConfig() {
+        return sslConfig -> {
+            if (Application.configuration.sslEnabled) {
+                sslConfig.insecure = false;
+                sslConfig.secure = true;
+                sslConfig.sniHostCheck = false; //BadMessageException: 400: Invalid SNI
+                sslConfig.pemFromPath(Application.configuration.sslCertificatePath, Application.configuration.sslPrivateKeyPath);
+            } else {
+                sslConfig.insecure = true;
+                sslConfig.secure = false;
+            }
+            sslConfig.insecurePort = port;
+            sslConfig.securePort = port;
+        };
+    }
+
+    private Consumer<CorsContainer> getCorsConfig() {
+        return cors -> cors.add(corsConfig -> {
+            corsConfig.allowHost(Application.configuration.corsHost);
+            corsConfig.allowCredentials = true;
+            //corsConfig.exposeHeader("Set-Cookie");
+        });
+    }
+
+    //==========[Endpoints]==========
 
     /**
      * /search
