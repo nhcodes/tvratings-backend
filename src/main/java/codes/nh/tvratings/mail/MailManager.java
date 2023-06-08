@@ -15,26 +15,21 @@ public class MailManager {
 
     private final String emailFrom;
 
-    public MailManager(String host, String port, boolean startTls, String emailFrom) {
+    public MailManager(String host, String port, boolean auth, boolean startTls, String username, String password, String emailFrom) {
         Properties properties = new Properties();
-        properties.put("mail.smtp.starttls.enable", startTls);
         properties.put("mail.smtp.host", host);
         properties.put("mail.smtp.port", port);
-        this.session = Session.getInstance(properties);
-        this.emailFrom = emailFrom;
-    }
-
-    public MailManager(String username, String password, String host, String port, boolean startTls, String emailFrom) {
-        Properties properties = new Properties();
-        properties.put("mail.smtp.auth", "true");
+        properties.put("mail.smtp.auth", auth);
         properties.put("mail.smtp.starttls.enable", startTls);
-        properties.put("mail.smtp.host", host);
-        properties.put("mail.smtp.port", port);
-        this.session = Session.getInstance(properties, new Authenticator() {
-            protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(username, password);
-            }
-        });
+        if (auth) {
+            this.session = Session.getInstance(properties, new Authenticator() {
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(username, password);
+                }
+            });
+        } else {
+            this.session = Session.getInstance(properties);
+        }
         this.emailFrom = emailFrom;
     }
 

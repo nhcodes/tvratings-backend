@@ -58,23 +58,15 @@ public class Application {
             Utils.log("error while creating or loading configuration: " + e.getMessage());
         }
 
-        if (configuration.smtpAuth) {
-            mailManager = new MailManager(
-                    configuration.emailUsername,
-                    configuration.emailPassword,
-                    configuration.smtpHost,
-                    configuration.smtpPort,
-                    configuration.smtpStartTLS,
-                    configuration.emailFrom
-            );
-        } else {
-            mailManager = new MailManager(
-                    configuration.smtpHost,
-                    configuration.smtpPort,
-                    configuration.smtpStartTLS,
-                    configuration.emailFrom
-            );
-        }
+        mailManager = new MailManager(
+                configuration.smtpHost,
+                configuration.smtpPort,
+                configuration.smtpAuth,
+                configuration.smtpStartTLS,
+                configuration.emailUsername,
+                configuration.emailPassword,
+                configuration.emailFrom
+        );
 
         Utils.doAsync(() -> {
             handleConsole();
