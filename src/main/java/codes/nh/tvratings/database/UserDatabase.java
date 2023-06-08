@@ -63,9 +63,4 @@ public class UserDatabase extends SqliteDatabase {
         return followedShows;
     }
 
-    public JSONArray getShowFollowerEmails(String showId) throws SQLException {
-        String emailsSql = "SELECT email FROM follows WHERE showId = ?";
-        return queryAndConvertToJson(emailsSql, List.of(showId));
-    }
-
 }

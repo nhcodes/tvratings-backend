@@ -13,10 +13,7 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -178,7 +175,7 @@ public class Application {
 
                 Utils.doAsync(() -> {
                     try {
-                        notifyNewEpisodes(updatedImdbDatabase, oldImdbDatabasePath);
+                        notifyNewEpisodes(updatedImdbDatabase, oldImdbDatabasePath, userDatabaseFile.getPath());
                     } catch (SQLException e) {
                         Utils.log("error while notifying new episodes: " + e.getMessage());
                     }
@@ -219,34 +216,37 @@ public class Application {
         }, initialDelaySeconds, intervalSeconds);
     }
 
+    record Show(String id, String title) {
+    }
+
     /**
-     * send emails to users who follow shows that have new episodes
-     * todo filter out episodes with year < 2023, they add older episodes sometimes too
+     * Notify users who follow shows that have new episodes via email.
      *
-     * @param newImdbDatabase     new database
-     * @param oldImdbDatabasePath old database
+     * @param newImdbDatabase     The new IMDb database.
+     * @param oldImdbDatabasePath The old IMDb database.
+     * @param userDatabasePath    The user database.
      */
-    private static void notifyNewEpisodes(ImdbDatabase newImdbDatabase, String oldImdbDatabasePath) throws SQLException {
-        HashMap<String, HashSet<String>> emailShowsMap = new HashMap<>();
-        JSONArray showsWithNewEpisodes = newImdbDatabase.getShowsWithNewEpisodes(oldImdbDatabasePath);
-        for (int i = 0; i < showsWithNewEpisodes.length(); i++) {
-            JSONObject showWithNewEpisode = showsWithNewEpisodes.getJSONObject(i);
-            String showId = showWithNewEpisode.getString("showId");
-            JSONArray emailsFollowingShow = userDatabase.getShowFollowerEmails(showId);
-            for (int j = 0; j < emailsFollowingShow.length(); j++) {
-                JSONObject emailFollowingShow = emailsFollowingShow.getJSONObject(j);
-                String email = emailFollowingShow.getString("email");
-                HashSet<String> emailShows = emailShowsMap.computeIfAbsent(email, k -> new HashSet<>());
-                emailShows.add(showId);
-            }
+    private static void notifyNewEpisodes(ImdbDatabase newImdbDatabase, String oldImdbDatabasePath, String userDatabasePath) throws SQLException {
+        long startTime = System.currentTimeMillis();
+
+        HashMap<String, List<Show>> emailShowsMap = new HashMap<>();
+        JSONArray userShowsJson = newImdbDatabase.getUsersFollowingShowsWithNewEpisodes(oldImdbDatabasePath, userDatabasePath);
+        for (int i = 0; i < userShowsJson.length(); i++) {
+            JSONObject userShowJson = userShowsJson.getJSONObject(i);
+            String email = userShowJson.getString("email");
+            Show show = new Show(userShowJson.getString("showId"), userShowJson.getString("title"));
+            List<Show> emailShows = emailShowsMap.computeIfAbsent(email, k -> new ArrayList<>());
+            emailShows.add(show);
         }
 
         String subject = "new episodes available";
-        emailShowsMap.forEach((email, showIds) -> {
+        emailShowsMap.forEach((email, shows) -> {
 
-            String emailContent = "<html><h5>shows you follow have new episodes: </h5>";
-            emailContent += showIds.stream().map((showId) -> "<h3>https://tvratin.gs?showId=" + showId + "</h3>").collect(Collectors.joining());
-            emailContent += "</html>";
+            String emailContent = "<html><h3>shows you follow have new episodes: </h3><ul>";
+            emailContent += shows.stream().map(
+                    (show) -> "<li><a href='https://tvratin.gs?showId=%s'><h4>%s</h4></a></li>".formatted(show.id, show.title)
+            ).collect(Collectors.joining());
+            emailContent += "</ul></html>";
 
             try {
                 Application.mailManager.sendMail(email, subject, emailContent);
@@ -255,10 +255,13 @@ public class Application {
             }
 
         });
+
+        long time = System.currentTimeMillis() - startTime;
+        Utils.log("notifyNewEpisodes took " + time + " ms");
     }
 
     /**
-     * listen for console commands
+     * listen for console commands.
      */
     private static void handleConsole() {
         Utils.log("");
