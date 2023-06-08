@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * the imdb database contains tv show data and the necessary queries
+ * The IMDb database contains TV show data.
  */
 public class ImdbDatabase extends SqliteDatabase {
 
@@ -18,11 +18,10 @@ public class ImdbDatabase extends SqliteDatabase {
     }
 
     /*
-    select genres as ordered, comma seperated string
-    should be ordered by default, if not:
-    , (SELECT GROUP_CONCAT(genre) FROM (SELECT g.genre FROM genres g WHERE t.showId = g.showId ORDER BY g.genre)) AS genres
+    Select genres as a sorted, comma separated string. It should be sorted by default, if not:
+    (SELECT GROUP_CONCAT(genre) FROM (SELECT g.genre FROM genres g WHERE t.showId = g.showId ORDER BY g.genre)) AS genres
     */
-    private final String genresQuery = "(SELECT GROUP_CONCAT(genre) FROM genres g WHERE t.showId = g.showId) AS genres";
+    private final String selectGenresQuery = "(SELECT GROUP_CONCAT(genre) FROM genres g WHERE t.showId = g.showId) AS genres";
 
     public JSONArray search(
             String type,
@@ -47,12 +46,12 @@ public class ImdbDatabase extends SqliteDatabase {
 
         //genres
 
-        sqlQueryBuilder.append(", ").append(genresQuery);
+        sqlQueryBuilder.append(", ").append(selectGenresQuery);
 
         //table
 
         String[] types = {"shows", "episodes"};
-        String tableName = Arrays.stream(types).filter(e -> e.equalsIgnoreCase(type)).findFirst().orElse(types[0]);
+        String tableName = findElementInArray(types, type);
         sqlQueryBuilder.append(" FROM ").append(tableName).append(" t");
 
         //conditions
@@ -114,7 +113,7 @@ public class ImdbDatabase extends SqliteDatabase {
         if (genres != null) {
             conditions.add("genres LIKE ?");
 
-            //genres are already sorted alphabetically in db
+            //genres need to be sorted alphabetically for this to work
             String[] genreArray = genres.split(",");
             Arrays.sort(genreArray);
             conditionValues.add("%" + String.join("%", genreArray) + "%");
@@ -127,11 +126,11 @@ public class ImdbDatabase extends SqliteDatabase {
         //order by
 
         String[] sortColumns = {"votes", "rating", "startYear", "title"};
-        String finalSortColumn = Arrays.stream(sortColumns).filter(e -> e.equalsIgnoreCase(sortColumn)).findFirst().orElse(sortColumns[0]);
+        String finalSortColumn = findElementInArray(sortColumns, sortColumn);
         sqlQueryBuilder.append(" ORDER BY ").append(finalSortColumn);
 
         String[] sortOrders = {"DESC", "ASC"};
-        String finalSortOrder = Arrays.stream(sortOrders).filter(e -> e.equalsIgnoreCase(sortOrder)).findFirst().orElse(sortOrders[0]);
+        String finalSortOrder = findElementInArray(sortOrders, sortOrder);
         sqlQueryBuilder.append(" ").append(finalSortOrder);
 
         //always sort by votes (if not already the case)
@@ -164,7 +163,7 @@ public class ImdbDatabase extends SqliteDatabase {
     }
 
     public JSONArray getShow(String showId) throws SQLException {
-        String showQuery = "SELECT *, " + genresQuery + " FROM shows t WHERE showId = ? ORDER BY votes DESC LIMIT 1";
+        String showQuery = "SELECT *, " + selectGenresQuery + " FROM shows t WHERE showId = ? ORDER BY votes DESC LIMIT 1";
         return queryAndConvertToJson(showQuery, List.of(showId));
     }
 
@@ -180,10 +179,9 @@ public class ImdbDatabase extends SqliteDatabase {
     }
 
     public JSONArray getNewShows(String oldDatabasePath) throws SQLException {
-        String attach = "ATTACH DATABASE ? as old";
+        String attach = "ATTACH DATABASE ? AS old";
         String detach = "DETACH DATABASE old";
-        String newShowsQuery = "SELECT * FROM shows WHERE showId NOT IN (SELECT o.showId FROM old.shows o) ORDER BY votes DESC";
-
+        String newShowsQuery = "SELECT n.* FROM shows n WHERE n.showId NOT IN (SELECT o.showId FROM old.shows o) ORDER BY n.votes DESC";
         execute(attach, List.of(oldDatabasePath));
         JSONArray shows = queryAndConvertToJson(newShowsQuery);
         execute(detach);
@@ -199,6 +197,10 @@ public class ImdbDatabase extends SqliteDatabase {
         JSONArray shows = queryAndConvertToJson(newEpisodesQuery);
         execute(detach);
         return shows;
+    }
+
+    private String findElementInArray(String[] array, String element) {
+        return Arrays.stream(array).filter(e -> e.equalsIgnoreCase(element)).findFirst().orElse(array[0]);
     }
 
 }
