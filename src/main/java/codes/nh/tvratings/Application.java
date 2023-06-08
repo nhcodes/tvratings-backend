@@ -232,7 +232,7 @@ public class Application {
         for (int i = 0; i < showsWithNewEpisodes.length(); i++) {
             JSONObject showWithNewEpisode = showsWithNewEpisodes.getJSONObject(i);
             String showId = showWithNewEpisode.getString("showId");
-            JSONArray emailsFollowingShow = userDatabase.getEmailsFollowingShow(showId);
+            JSONArray emailsFollowingShow = userDatabase.getShowFollowerEmails(showId);
             for (int j = 0; j < emailsFollowingShow.length(); j++) {
                 JSONObject emailFollowingShow = emailsFollowingShow.getJSONObject(j);
                 String email = emailFollowingShow.getString("email");

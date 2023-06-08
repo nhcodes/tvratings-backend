@@ -271,7 +271,7 @@ public class ImdbServer {
 
             Utils.log(email + " getFollows");
 
-            JSONArray followsJson = userDatabase.getFollows(email, imdbDatabase.getDatabasePath());
+            JSONArray followsJson = userDatabase.getFollowedShows(email, imdbDatabase.getDatabasePath());
             respondSuccess(context, followsJson.toString());
 
         };
@@ -300,14 +300,14 @@ public class ImdbServer {
             }
 
             if (follow) {
-                userDatabase.follow(email, showId);
+                userDatabase.followShow(email, showId);
                 Utils.log(email + " followed " + showId);
             } else {
-                userDatabase.unfollow(email, showId);
+                userDatabase.unfollowShow(email, showId);
                 Utils.log(email + " unfollowed " + showId);
             }
 
-            JSONArray followsJson = userDatabase.getFollows(email, imdbDatabase.getDatabasePath());
+            JSONArray followsJson = userDatabase.getFollowedShows(email, imdbDatabase.getDatabasePath());
             respondSuccess(context, followsJson.toString());
 
         };

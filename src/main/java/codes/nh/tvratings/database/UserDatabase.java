@@ -6,7 +6,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 /**
- * the user database contains login verification codes and the shows that users followed
+ * The user database contains login verification codes and followed shows.
  */
 public class UserDatabase extends SqliteDatabase {
 
@@ -43,28 +43,29 @@ public class UserDatabase extends SqliteDatabase {
 
     //
 
-    public int follow(String email, String showId) throws SQLException {
+    public int followShow(String email, String showId) throws SQLException {
         String followSql = "INSERT OR IGNORE INTO follows VALUES (?, ?)";
         return execute(followSql, List.of(email, showId));
     }
 
-    public int unfollow(String email, String showId) throws SQLException {
+    public int unfollowShow(String email, String showId) throws SQLException {
         String unfollowSql = "DELETE FROM follows WHERE email = ? AND showId = ?";
         return execute(unfollowSql, List.of(email, showId));
     }
 
-    public JSONArray getFollows(String email, String imdbDatabasePath) throws SQLException {
-        String attach = "ATTACH DATABASE ? as imdb";
+    public JSONArray getFollowedShows(String email, String imdbDatabasePath) throws SQLException {
+        String attach = "ATTACH DATABASE ? AS imdb";
         String detach = "DETACH DATABASE imdb";
-        String followsSql = "SELECT f.showId, (SELECT s.title FROM imdb.shows s WHERE s.showId = f.showId) as title FROM follows f WHERE f.email = ?";
+        String followsSql = "SELECT f.showId, (SELECT s.title FROM imdb.shows s WHERE s.showId = f.showId) AS title FROM follows f WHERE f.email = ?";
         execute(attach, List.of(imdbDatabasePath));
-        JSONArray follows = queryAndConvertToJson(followsSql, List.of(email));
+        JSONArray followedShows = queryAndConvertToJson(followsSql, List.of(email));
         execute(detach);
-        return follows;
+        return followedShows;
     }
 
-    public JSONArray getEmailsFollowingShow(String showId) throws SQLException {
+    public JSONArray getShowFollowerEmails(String showId) throws SQLException {
         String emailsSql = "SELECT email FROM follows WHERE showId = ?";
         return queryAndConvertToJson(emailsSql, List.of(showId));
     }
+
 }
