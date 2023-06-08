@@ -3,6 +3,7 @@ package codes.nh.tvratings.server;
 import codes.nh.tvratings.Application;
 import codes.nh.tvratings.database.ImdbDatabase;
 import codes.nh.tvratings.database.UserDatabase;
+import codes.nh.tvratings.utils.JWTManager;
 import codes.nh.tvratings.utils.Utils;
 import io.javalin.Javalin;
 import io.javalin.community.ssl.SSLPlugin;
@@ -165,6 +166,8 @@ public class ImdbServer {
                 return;
             }
 
+            Utils.log(showJson.toString());
+
             JSONArray episodesJson = imdbDatabase.getShowEpisodes(showId);
 
             JSONObject resultJson = new JSONObject();
@@ -313,8 +316,23 @@ public class ImdbServer {
         };
     }
 
+    private void sendVerificationMail(String email, String verificationCode) throws Exception {
+        String subject = "your verification code";
+        String content = "<html><h5>your verification code: </h5><h3>" + verificationCode + "</h3></html>";
+        Application.mailManager.sendMail(email, subject, content);
+    }
+
+    //==========[Authentication]==========
+
+    /*
+    https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie
+    https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies
+    */
+
+    private final JWTManager jwtManager = new JWTManager(Application.configuration.jwtSecretKey);
+
     private void setJWTCookie(Context context, String email) {
-        String token = Utils.createJWT(email);
+        String token = jwtManager.createJWT(email);
         Cookie cookie = new Cookie("jwt", token);
         cookie.setMaxAge(Application.configuration.jwtExpireSeconds);
         cookie.setSameSite(SameSite.STRICT);
@@ -326,13 +344,7 @@ public class ImdbServer {
     private String getJWTEmailFromCookie(Context context) {
         String token = context.cookie("jwt");
         if (token == null) return null;
-        return Utils.verifyJWT(token);
-    }
-
-    private void sendVerificationMail(String email, String verificationCode) throws Exception {
-        String subject = "your verification code";
-        String content = "<html><h5>your verification code: </h5><h3>" + verificationCode + "</h3></html>";
-        Application.mailManager.sendMail(email, subject, content);
+        return jwtManager.verifyJWT(token);
     }
 
 }

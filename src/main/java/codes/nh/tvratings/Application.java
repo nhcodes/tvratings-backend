@@ -76,8 +76,6 @@ public class Application {
             );
         }
 
-        Utils.initMac(configuration.jwtSecretKey);
-
         Utils.doAsync(() -> {
             handleConsole();
         });
