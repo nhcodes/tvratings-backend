@@ -7,11 +7,14 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
- * this class contains several utilities
+ * This class contains several utilities.
  */
 public class Utils {
 
@@ -28,36 +31,33 @@ public class Utils {
 
     //==========[ASYNC]==========
 
-    private static final ExecutorService threadPool = Executors.newCachedThreadPool();
+    private static final ExecutorService THREAD_POOL = Executors.newCachedThreadPool();
 
     /**
-     * executes a function in a new thread
+     * Executes a function in a new thread.
      *
-     * @param function the function to execute asynchronously
+     * @param function The function to execute asynchronously.
      */
     public static Future<?> doAsync(Runnable function) {
-        return threadPool.submit(function);
+        return THREAD_POOL.submit(function);
     }
 
-    private static final ScheduledExecutorService scheduledThreadPool = Executors.newScheduledThreadPool(1);
-
     /**
-     * executes a function in a new thread repeatedly
+     * Executes a function in a new thread.
      *
-     * @param function            the function to execute asynchronously & repeatedly
-     * @param initialDelaySeconds the initial delay in seconds before the first execution happens
-     * @param intervalSeconds     the interval in seconds between the function executions
+     * @param function The function to execute asynchronously.
+     * @param delayMs  The delay in milliseconds.
      */
-    public static ScheduledFuture<?> repeatAsync(Runnable function, long initialDelaySeconds, long intervalSeconds) {
-        return scheduledThreadPool.scheduleAtFixedRate(function, initialDelaySeconds, intervalSeconds, TimeUnit.SECONDS);
+    public static Future<?> doAsync(Runnable function, long delayMs) {
+        return Executors.newSingleThreadScheduledExecutor().schedule(function, delayMs, TimeUnit.MILLISECONDS);
     }
 
     //==========[OTHER]==========
 
     /**
-     * listens for new console messages. this method is blocking
+     * Listens for new console messages. This method is blocking.
      *
-     * @param listener gets called when there is a new message
+     * @param listener Gets called when there is a new message.
      */
     public static void listenForConsoleCommands(Consumer<String> listener) {
         Scanner scanner = new Scanner(System.in);
@@ -82,14 +82,14 @@ public class Utils {
         else return null;
     }
 
-    private static final DateTimeFormatter dateFormat = DateTimeFormatter.ofPattern("yyyyMMdd");
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     /**
-     * @return the current utc date in the format yyyyMMdd
+     * @return The current UTC date in the format "yyyyMMdd".
      */
     public static String getDateString() {
         ZonedDateTime utcTime = ZonedDateTime.now(ZoneOffset.UTC);
-        return utcTime.format(dateFormat);
+        return utcTime.format(DATE_FORMAT);
     }
 
 }
