@@ -13,8 +13,8 @@ import java.util.List;
  */
 public class ImdbDatabase extends SqliteDatabase {
 
-    public ImdbDatabase(String databaseFileName) {
-        super(databaseFileName);
+    public ImdbDatabase(String databasePath) {
+        super(databasePath);
     }
 
     /*

@@ -10,8 +10,8 @@ import java.util.List;
  */
 public class UserDatabase extends SqliteDatabase {
 
-    public UserDatabase(String databaseFileName) {
-        super(databaseFileName);
+    public UserDatabase(String databasePath) {
+        super(databasePath);
     }
 
     @Override
