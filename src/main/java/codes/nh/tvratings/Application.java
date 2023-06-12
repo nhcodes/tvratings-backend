@@ -11,7 +11,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -64,6 +63,9 @@ public class Application {
 
         try {
 
+            UserDatabase userDatabase = new UserDatabase(getUserDatabaseFile().getPath());
+            userDatabase.connect();
+
             ImdbDatabaseUpdater imdbDatabaseUpdater = new ImdbDatabaseUpdater();
             imdbDatabaseUpdater.setDatabaseUpdateListener(newImdbDatabase -> {
 
@@ -76,14 +78,11 @@ public class Application {
                     Utils.log("error while disconnecting from old imdb database: " + e.getMessage());
                 }
 
-                notifyNewEpisodes(newImdbDatabase, oldImdbDatabase, getUserDatabaseFile().getPath());
+                notifyNewEpisodes(userDatabase, newImdbDatabase, oldImdbDatabase);
 
             });
 
             ImdbDatabase imdbDatabase = imdbDatabaseUpdater.getImdbDatabaseAndCheckForUpdates();
-
-            UserDatabase userDatabase = new UserDatabase(getUserDatabaseFile().getPath());
-            userDatabase.connect();
 
             server = new APIServer(configuration.serverPort, imdbDatabase, userDatabase);
             server.start();
@@ -96,6 +95,8 @@ public class Application {
     private static File getUserDatabaseFile() {
         return new File(databaseDirectory, "users" + databaseFileNameSuffix);
     }
+
+    //console
 
     /**
      * Listen for console commands.
@@ -122,23 +123,25 @@ public class Application {
         });
     }
 
+    //email notifications
+
     record Show(String id, String title) {
     }
 
     /**
      * Notify users who follow shows that have new episodes via email.
      *
-     * @param newImdbDatabase  The new IMDb database.
-     * @param oldImdbDatabase  The old IMDb database.
-     * @param userDatabasePath The user database.
+     * @param userDatabase    The user database.
+     * @param newImdbDatabase The new IMDb database.
+     * @param oldImdbDatabase The old IMDb database.
      */
-    private static void notifyNewEpisodes(ImdbDatabase newImdbDatabase, ImdbDatabase oldImdbDatabase, String userDatabasePath) {
+    private static void notifyNewEpisodes(UserDatabase userDatabase, ImdbDatabase newImdbDatabase, ImdbDatabase oldImdbDatabase) {
         try {
 
             long startTime = System.currentTimeMillis();
 
             HashMap<String, List<Show>> emailShowsMap = new HashMap<>();
-            JSONArray userShowsJson = newImdbDatabase.getUsersFollowingShowsWithNewEpisodes(oldImdbDatabase.getDatabasePath(), userDatabasePath);
+            JSONArray userShowsJson = userDatabase.getUsersFollowingShowsWithNewEpisodes(newImdbDatabase.getDatabasePath(), oldImdbDatabase.getDatabasePath());
             for (int i = 0; i < userShowsJson.length(); i++) {
                 JSONObject userShowJson = userShowsJson.getJSONObject(i);
                 String email = userShowJson.getString("email");

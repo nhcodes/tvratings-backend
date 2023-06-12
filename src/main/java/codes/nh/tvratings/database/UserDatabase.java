@@ -63,4 +63,33 @@ public class UserDatabase extends SqliteDatabase {
         return followedShows;
     }
 
+    public JSONArray getUsersFollowingShowsWithNewEpisodes(String newImdbDatabasePath, String oldImdbDatabasePath) throws SQLException {
+
+        /*
+        old queries:
+
+            doesn't work because episodes are often added to the database before they aired
+            String newEpisodesQuery = "SELECT n.* FROM episodes n WHERE n.episodeId NOT IN (SELECT o.episodeId FROM old.episodes o) ORDER BY n.votes DESC";
+
+            works but doesn't directly include followed shows
+            String newEpisodesQuery = "SELECT DISTINCT n.showId, (SELECT s.title FROM shows s WHERE s.showId = n.showId) AS showTitle FROM episodes n LEFT JOIN old.episodes o ON n.episodeId = o.episodeId WHERE n.votes IS NOT NULL AND o.votes IS NULL ORDER BY n.votes DESC";
+        */
+
+        String attachNewDatabase = "ATTACH DATABASE ? AS new";
+        String detachNewDatabase = "DETACH DATABASE new";
+
+        String attachOldDatabase = "ATTACH DATABASE ? AS old";
+        String detachOldDatabase = "DETACH DATABASE old";
+
+        //when a new episode airs, voting is enabled (n.votes IS NOT NULL AND o.votes IS NULL)
+        String newEpisodeQuery = "SELECT DISTINCT f.*, s.title FROM follows f LEFT JOIN new.shows s ON s.showId = f.showId LEFT JOIN new.episodes n ON n.showId = f.showId LEFT JOIN old.episodes o ON o.episodeId = n.episodeId WHERE n.votes IS NOT NULL AND o.votes IS NULL";
+
+        execute(attachNewDatabase, List.of(newImdbDatabasePath));
+        execute(attachOldDatabase, List.of(oldImdbDatabasePath));
+        JSONArray shows = queryAndConvertToJson(newEpisodeQuery);
+        execute(detachNewDatabase);
+        execute(detachOldDatabase);
+        return shows;
+    }
+
 }

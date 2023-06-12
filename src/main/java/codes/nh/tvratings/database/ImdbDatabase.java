@@ -172,49 +172,9 @@ public class ImdbDatabase extends SqliteDatabase {
         return queryAndConvertToJson(episodesQuery, List.of(showId));
     }
 
-
     public JSONArray getGenres() throws SQLException {
         String genresQuery = "SELECT DISTINCT genre FROM genres ORDER BY genre";
         return queryAndConvertToJson(genresQuery);
-    }
-
-    public JSONArray getNewShows(String oldDatabasePath) throws SQLException {
-        String attach = "ATTACH DATABASE ? AS old";
-        String detach = "DETACH DATABASE old";
-        String newShowsQuery = "SELECT n.* FROM shows n WHERE n.showId NOT IN (SELECT o.showId FROM old.shows o) ORDER BY n.votes DESC";
-        execute(attach, List.of(oldDatabasePath));
-        JSONArray shows = queryAndConvertToJson(newShowsQuery);
-        execute(detach);
-        return shows;
-    }
-
-    public JSONArray getUsersFollowingShowsWithNewEpisodes(String oldDatabasePath, String userDatabasePath) throws SQLException {
-
-        /*
-        old queries:
-
-            doesn't work because episodes are often added to the database before they aired
-            String newEpisodesQuery = "SELECT n.* FROM episodes n WHERE n.episodeId NOT IN (SELECT o.episodeId FROM old.episodes o) ORDER BY n.votes DESC";
-
-            works but doesn't directly include followed shows
-            String newEpisodesQuery = "SELECT DISTINCT n.showId, (SELECT s.title FROM shows s WHERE s.showId = n.showId) AS showTitle FROM episodes n LEFT JOIN old.episodes o ON n.episodeId = o.episodeId WHERE n.votes IS NOT NULL AND o.votes IS NULL ORDER BY n.votes DESC";
-        */
-
-        String attachOldDatabase = "ATTACH DATABASE ? AS old";
-        String detachOldDatabase = "DETACH DATABASE old";
-
-        String attachUserDatabase = "ATTACH DATABASE ? AS user";
-        String detachUserDatabase = "DETACH DATABASE user";
-
-        //when a new episode airs, voting is enabled (n.votes IS NOT NULL AND o.votes IS NULL)
-        String newEpisodeQuery = "SELECT DISTINCT f.*, s.title FROM user.follows f LEFT JOIN shows s ON s.showId = f.showId LEFT JOIN episodes n ON f.showId = n.showId LEFT JOIN old.episodes o ON n.episodeId = o.episodeId WHERE n.votes IS NOT NULL AND o.votes IS NULL";
-
-        execute(attachOldDatabase, List.of(oldDatabasePath));
-        execute(attachUserDatabase, List.of(userDatabasePath));
-        JSONArray shows = queryAndConvertToJson(newEpisodeQuery);
-        execute(detachOldDatabase);
-        execute(detachUserDatabase);
-        return shows;
     }
 
     private String findElementInArray(String[] array, String element) {
