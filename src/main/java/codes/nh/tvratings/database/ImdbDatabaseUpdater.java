@@ -10,8 +10,6 @@ import java.util.Comparator;
 
 public class ImdbDatabaseUpdater {
 
-    private static final boolean DO_UPDATES = true;
-
     private final File imdbDatabaseDirectory = new File(Application.databaseDirectory, "imdb");
 
     private File getOldImdbDatabaseFile() {
@@ -60,7 +58,7 @@ public class ImdbDatabaseUpdater {
             imdbDatabase = new ImdbDatabase(oldImdbDatabaseFile.getPath());
             imdbDatabase.connect();
 
-            if (DO_UPDATES) {
+            if (Application.configuration.updateDatabase) {
                 Utils.doAsync(() -> {
                     updateDatabase(newImdbDatabaseFile);
                 });
@@ -76,7 +74,7 @@ public class ImdbDatabaseUpdater {
 
         }
 
-        if (DO_UPDATES) {
+        if (Application.configuration.updateDatabase) {
             startDailyUpdater();
         }
 

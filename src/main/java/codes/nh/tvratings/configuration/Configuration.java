@@ -57,6 +57,10 @@ public class Configuration {
 
     public String recaptchaSecret = "";
 
+    //database updates
+
+    public boolean updateDatabase = true;
+
     public Configuration(File file) {
         this.file = file;
     }
@@ -87,6 +91,8 @@ public class Configuration {
 
         configJson.put("recaptchaSecret", recaptchaSecret);
 
+        configJson.put("updateDatabase", updateDatabase);
+
         Files.writeString(file.toPath(), configJson.toString(2), StandardOpenOption.CREATE);
     }
 
@@ -114,6 +120,8 @@ public class Configuration {
         emailFrom = configJson.getString("emailFrom");
 
         recaptchaSecret = configJson.getString("recaptchaSecret");
+
+        updateDatabase = configJson.getBoolean("updateDatabase");
     }
 
 }
