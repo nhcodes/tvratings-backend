@@ -65,7 +65,7 @@ public class Configuration {
         this.file = file;
     }
 
-    public void createIfNotExists() throws IOException {
+    public void createIfNotExists() throws Exception {
         if (file.exists()) return;
 
         JSONObject configJson = new JSONObject();
@@ -96,7 +96,7 @@ public class Configuration {
         Files.writeString(file.toPath(), configJson.toString(2), StandardOpenOption.CREATE);
     }
 
-    public void load() throws IOException {
+    public void load() throws Exception {
         String fileContent = Files.readString(file.toPath());
         JSONObject configJson = new JSONObject(fileContent);
 

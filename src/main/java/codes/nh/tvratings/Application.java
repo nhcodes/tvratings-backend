@@ -48,7 +48,7 @@ public class Application {
         try {
             configuration.createIfNotExists();
             configuration.load();
-        } catch (IOException e) {
+        } catch (Exception e) {
             Utils.log("error while creating or loading configuration: " + e.getMessage());
         }
 
