@@ -1,8 +1,9 @@
 package codes.nh.tvratings.server;
 
-import codes.nh.tvratings.Application;
+import codes.nh.tvratings.configuration.Configuration;
 import codes.nh.tvratings.database.ImdbDatabase;
 import codes.nh.tvratings.database.UserDatabase;
+import codes.nh.tvratings.mail.MailManager;
 import codes.nh.tvratings.utils.JWTManager;
 import codes.nh.tvratings.utils.RecaptchaManager;
 import codes.nh.tvratings.utils.Utils;
@@ -27,16 +28,25 @@ public class APIServer {
 
     private final int port;
 
+    private final Configuration configuration;
+
+    private final MailManager mailManager;
+
     private ImdbDatabase imdbDatabase;
 
-    private UserDatabase userDatabase;
+    private final UserDatabase userDatabase;
 
     private Javalin server;
 
-    public APIServer(int port, ImdbDatabase imdbDatabase, UserDatabase userDatabase) {
-        this.port = port;
+    public APIServer(Configuration configuration, MailManager mailManager, ImdbDatabase imdbDatabase, UserDatabase userDatabase) {
+        this.port = configuration.serverPort;
+        this.configuration = configuration;
+        this.mailManager = mailManager;
         this.imdbDatabase = imdbDatabase;
         this.userDatabase = userDatabase;
+
+        this.recaptchaManager = new RecaptchaManager(configuration.recaptchaSecret);
+        this.jwtManager = new JWTManager(configuration.jwtSecretKey);
     }
 
     public ImdbDatabase getImdbDatabase() {
@@ -45,6 +55,10 @@ public class APIServer {
 
     public void setImdbDatabase(ImdbDatabase imdbDatabase) {
         this.imdbDatabase = imdbDatabase;
+    }
+
+    public UserDatabase getUserDatabase() {
+        return userDatabase;
     }
 
     /**
@@ -97,7 +111,7 @@ public class APIServer {
     private Consumer<JavalinConfig> getJavalinConfig() {
         return config -> {
 
-            if (Application.configuration.sslEnabled) {
+            if (configuration.sslEnabled) {
                 config.plugins.enableSslRedirects();
             }
 
@@ -110,11 +124,11 @@ public class APIServer {
 
     private Consumer<SSLConfig> getSSLConfig() {
         return sslConfig -> {
-            if (Application.configuration.sslEnabled) {
+            if (configuration.sslEnabled) {
                 sslConfig.insecure = false;
                 sslConfig.secure = true;
                 sslConfig.sniHostCheck = false; //BadMessageException: 400: Invalid SNI
-                sslConfig.pemFromPath(Application.configuration.sslCertificatePath, Application.configuration.sslPrivateKeyPath);
+                sslConfig.pemFromPath(configuration.sslCertificatePath, configuration.sslPrivateKeyPath);
             } else {
                 sslConfig.insecure = true;
                 sslConfig.secure = false;
@@ -126,7 +140,7 @@ public class APIServer {
 
     private Consumer<CorsContainer> getCorsConfig() {
         return cors -> cors.add(corsConfig -> {
-            corsConfig.allowHost(Application.configuration.corsHost);
+            corsConfig.allowHost(configuration.corsHost);
             corsConfig.allowCredentials = true;
             //corsConfig.exposeHeader("Set-Cookie");
         });
@@ -343,12 +357,12 @@ public class APIServer {
     private void sendVerificationMail(String email, String verificationCode) throws Exception {
         String subject = "your verification code";
         String content = "<html><h3>your verification code: %s</h3></html>".formatted(verificationCode);
-        Application.mailManager.sendMail(email, subject, content);
+        mailManager.sendMail(email, subject, content);
     }
 
     //==========[Google Recaptcha]==========
 
-    private final RecaptchaManager recaptchaManager = new RecaptchaManager();
+    private final RecaptchaManager recaptchaManager;
 
     //==========[JWT Authentication]==========
 
@@ -357,12 +371,12 @@ public class APIServer {
     https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies
     */
 
-    private final JWTManager jwtManager = new JWTManager(Application.configuration.jwtSecretKey);
+    private final JWTManager jwtManager;
 
     private void setJWTCookie(Context context, String email) {
         String token = jwtManager.createJWT(email);
         Cookie cookie = new Cookie("jwt", token);
-        cookie.setMaxAge(Application.configuration.jwtExpireSeconds);
+        cookie.setMaxAge(configuration.jwtExpireSeconds);
         cookie.setSameSite(SameSite.STRICT);
         cookie.setSecure(true);
         cookie.setHttpOnly(true);

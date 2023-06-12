@@ -1,6 +1,5 @@
 package codes.nh.tvratings.utils;
 
-import codes.nh.tvratings.Application;
 import org.json.JSONObject;
 
 import java.net.URI;
@@ -16,13 +15,18 @@ public class RecaptchaManager {
 
     private final HttpClient client = HttpClient.newHttpClient();
 
+    private final String secretKey;
+
+    public RecaptchaManager(String secretKey) {
+        this.secretKey = secretKey;
+    }
+
     public boolean verifyToken(String token) {
         if (token == null) return false;
 
         try {
 
-            String secret = Application.configuration.recaptchaSecret;
-            String url = "https://www.google.com/recaptcha/api/siteverify?secret=%s&response=%s".formatted(secret, token);
+            String url = "https://www.google.com/recaptcha/api/siteverify?secret=%s&response=%s".formatted(secretKey, token);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(new URI(url))

@@ -1,6 +1,6 @@
 package codes.nh.tvratings.database;
 
-import codes.nh.tvratings.Application;
+import codes.nh.tvratings.configuration.Configuration;
 import codes.nh.tvratings.utils.Utils;
 
 import java.io.File;
@@ -10,18 +10,25 @@ import java.util.Comparator;
 
 public class ImdbDatabaseUpdater {
 
-    private final File imdbDatabaseDirectory = new File(Application.databaseDirectory, "imdb");
+    private final Configuration configuration;
+
+    private final File imdbDatabaseDirectory;
+
+    public ImdbDatabaseUpdater(Configuration configuration) {
+        this.configuration = configuration;
+        this.imdbDatabaseDirectory = new File(configuration.databaseDirectory, "imdb");
+    }
 
     private File getOldImdbDatabaseFile() {
         return Arrays.stream(imdbDatabaseDirectory.listFiles())
-                .filter(file -> file.getName().endsWith(Application.databaseFileNameSuffix))
+                .filter(file -> file.getName().endsWith(configuration.databaseFileExtension))
                 .max(Comparator.comparing(file -> file.getName()))
                 .orElse(null);
     }
 
     private File getNewImdbDatabaseFile() {
         String dateString = Utils.getDateString();
-        String fileName = dateString + Application.databaseFileNameSuffix;
+        String fileName = dateString + configuration.databaseFileExtension;
         return new File(imdbDatabaseDirectory, fileName);
     }
 
@@ -58,7 +65,7 @@ public class ImdbDatabaseUpdater {
             imdbDatabase = new ImdbDatabase(oldImdbDatabaseFile.getPath());
             imdbDatabase.connect();
 
-            if (Application.configuration.updateDatabase) {
+            if (configuration.updateDatabase) {
                 Utils.doAsync(() -> {
                     updateDatabase(newImdbDatabaseFile);
                 });
@@ -74,7 +81,7 @@ public class ImdbDatabaseUpdater {
 
         }
 
-        if (Application.configuration.updateDatabase) {
+        if (configuration.updateDatabase) {
             startDailyUpdater();
         }
 

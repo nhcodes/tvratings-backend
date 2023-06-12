@@ -3,7 +3,6 @@ package codes.nh.tvratings.configuration;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 
@@ -57,9 +56,13 @@ public class Configuration {
 
     public String recaptchaSecret = "";
 
-    //database updates
+    //database
 
     public boolean updateDatabase = true;
+
+    public final String databaseFileExtension = ".sqlite3";
+
+    public final String databaseDirectory = "databases";
 
     public Configuration(File file) {
         this.file = file;
