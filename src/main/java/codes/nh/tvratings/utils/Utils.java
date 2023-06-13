@@ -54,19 +54,6 @@ public class Utils {
 
     //==========[OTHER]==========
 
-    /**
-     * Listens for new console messages. This method is blocking.
-     *
-     * @param listener Gets called when there is a new message.
-     */
-    public static void listenForConsoleCommands(Consumer<String> listener) {
-        Scanner scanner = new Scanner(System.in);
-        while (scanner.hasNextLine()) {
-            String command = scanner.nextLine();
-            listener.accept(command);
-        }
-    }
-
     public static Integer stringToIntOrNull(String string) {
         try {
             return Integer.parseInt(string);
