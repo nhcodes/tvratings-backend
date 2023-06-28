@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.xerial:sqlite-jdbc:3.41.0.0' //sqlite
+    implementation 'org.xerial:sqlite-jdbc:3.42.0.0' //sqlite
 
     implementation 'io.javalin:javalin:5.4.2' //http server
     implementation 'io.javalin.community.ssl:ssl-plugin:5.4.2' //https
